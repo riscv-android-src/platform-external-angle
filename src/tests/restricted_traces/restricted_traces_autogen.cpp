@@ -16,6 +16,7 @@
 #include "angry_birds_2_1500/angry_birds_2_1500_capture_context1.h"
 #include "arena_of_valor/arena_of_valor_capture_context1.h"
 #include "asphalt_8/asphalt_8_capture_context2.h"
+#include "avakin_life/avakin_life_capture_context2.h"
 #include "brawl_stars/brawl_stars_capture_context1.h"
 #include "bus_simulator_indonesia/bus_simulator_indonesia_capture_context1.h"
 #include "candy_crush_500/candy_crush_500_capture_context1.h"
@@ -57,6 +58,7 @@
 #include "ragnarok_m_eternal_love/ragnarok_m_eternal_love_capture_context3.h"
 #include "raid_shadow_legends/raid_shadow_legends_capture_context2.h"
 #include "real_commando_secret_mission/real_commando_secret_mission_capture_context1.h"
+#include "real_cricket_20/real_cricket_20_capture_context2.h"
 #include "real_gangster_crime/real_gangster_crime_capture_context3.h"
 #include "rise_of_kingdoms/rise_of_kingdoms_capture_context4.h"
 #include "romancing_saga/romancing_saga_capture_context3.h"
@@ -102,6 +104,10 @@ constexpr angle::PackedEnumMap<RestrictedTraceID, TraceInfo> kTraceInfos = {
      {kDefaultReplayContextClientMajorVersion, kDefaultReplayContextClientMinorVersion,
       asphalt_8::kReplayFrameStart, asphalt_8::kReplayFrameEnd, asphalt_8::kReplayDrawSurfaceWidth,
       asphalt_8::kReplayDrawSurfaceHeight, "asphalt_8"}},
+    {RestrictedTraceID::avakin_life,
+     {avakin_life::kReplayContextClientMajorVersion, avakin_life::kReplayContextClientMinorVersion,
+      avakin_life::kReplayFrameStart, avakin_life::kReplayFrameEnd,
+      avakin_life::kReplayDrawSurfaceWidth, avakin_life::kReplayDrawSurfaceHeight, "avakin_life"}},
     {RestrictedTraceID::brawl_stars,
      {kDefaultReplayContextClientMajorVersion, kDefaultReplayContextClientMinorVersion,
       brawl_stars::kReplayFrameStart, brawl_stars::kReplayFrameEnd,
@@ -300,6 +306,11 @@ constexpr angle::PackedEnumMap<RestrictedTraceID, TraceInfo> kTraceInfos = {
       real_commando_secret_mission::kReplayFrameEnd,
       real_commando_secret_mission::kReplayDrawSurfaceWidth,
       real_commando_secret_mission::kReplayDrawSurfaceHeight, "real_commando_secret_mission"}},
+    {RestrictedTraceID::real_cricket_20,
+     {real_cricket_20::kReplayContextClientMajorVersion,
+      real_cricket_20::kReplayContextClientMinorVersion, real_cricket_20::kReplayFrameStart,
+      real_cricket_20::kReplayFrameEnd, real_cricket_20::kReplayDrawSurfaceWidth,
+      real_cricket_20::kReplayDrawSurfaceHeight, "real_cricket_20"}},
     {RestrictedTraceID::real_gangster_crime,
      {kDefaultReplayContextClientMajorVersion, kDefaultReplayContextClientMinorVersion,
       real_gangster_crime::kReplayFrameStart, real_gangster_crime::kReplayFrameEnd,
@@ -407,6 +418,9 @@ void ReplayFrame(RestrictedTraceID traceID, uint32_t frameIndex)
             break;
         case RestrictedTraceID::asphalt_8:
             asphalt_8::ReplayContext2Frame(frameIndex);
+            break;
+        case RestrictedTraceID::avakin_life:
+            avakin_life::ReplayContext2Frame(frameIndex);
             break;
         case RestrictedTraceID::brawl_stars:
             brawl_stars::ReplayContext1Frame(frameIndex);
@@ -531,6 +545,9 @@ void ReplayFrame(RestrictedTraceID traceID, uint32_t frameIndex)
         case RestrictedTraceID::real_commando_secret_mission:
             real_commando_secret_mission::ReplayContext1Frame(frameIndex);
             break;
+        case RestrictedTraceID::real_cricket_20:
+            real_cricket_20::ReplayContext2Frame(frameIndex);
+            break;
         case RestrictedTraceID::real_gangster_crime:
             real_gangster_crime::ReplayContext3Frame(frameIndex);
             break;
@@ -607,6 +624,9 @@ void ResetReplay(RestrictedTraceID traceID)
             break;
         case RestrictedTraceID::asphalt_8:
             asphalt_8::ResetContext2Replay();
+            break;
+        case RestrictedTraceID::avakin_life:
+            avakin_life::ResetContext2Replay();
             break;
         case RestrictedTraceID::brawl_stars:
             brawl_stars::ResetContext1Replay();
@@ -731,6 +751,9 @@ void ResetReplay(RestrictedTraceID traceID)
         case RestrictedTraceID::real_commando_secret_mission:
             real_commando_secret_mission::ResetContext1Replay();
             break;
+        case RestrictedTraceID::real_cricket_20:
+            real_cricket_20::ResetContext2Replay();
+            break;
         case RestrictedTraceID::real_gangster_crime:
             real_gangster_crime::ResetContext3Replay();
             break;
@@ -807,6 +830,9 @@ void SetupReplay(RestrictedTraceID traceID)
             break;
         case RestrictedTraceID::asphalt_8:
             asphalt_8::SetupContext2Replay();
+            break;
+        case RestrictedTraceID::avakin_life:
+            avakin_life::SetupContext2Replay();
             break;
         case RestrictedTraceID::brawl_stars:
             brawl_stars::SetupContext1Replay();
@@ -931,6 +957,9 @@ void SetupReplay(RestrictedTraceID traceID)
         case RestrictedTraceID::real_commando_secret_mission:
             real_commando_secret_mission::SetupContext1Replay();
             break;
+        case RestrictedTraceID::real_cricket_20:
+            real_cricket_20::SetupContext2Replay();
+            break;
         case RestrictedTraceID::real_gangster_crime:
             real_gangster_crime::SetupContext3Replay();
             break;
@@ -1007,6 +1036,9 @@ void SetBinaryDataDir(RestrictedTraceID traceID, const char *dataDir)
             break;
         case RestrictedTraceID::asphalt_8:
             asphalt_8::SetBinaryDataDir(dataDir);
+            break;
+        case RestrictedTraceID::avakin_life:
+            avakin_life::SetBinaryDataDir(dataDir);
             break;
         case RestrictedTraceID::brawl_stars:
             brawl_stars::SetBinaryDataDir(dataDir);
@@ -1131,6 +1163,9 @@ void SetBinaryDataDir(RestrictedTraceID traceID, const char *dataDir)
         case RestrictedTraceID::real_commando_secret_mission:
             real_commando_secret_mission::SetBinaryDataDir(dataDir);
             break;
+        case RestrictedTraceID::real_cricket_20:
+            real_cricket_20::SetBinaryDataDir(dataDir);
+            break;
         case RestrictedTraceID::real_gangster_crime:
             real_gangster_crime::SetBinaryDataDir(dataDir);
             break;
@@ -1207,6 +1242,9 @@ void SetBinaryDataDecompressCallback(RestrictedTraceID traceID, DecompressCallba
             break;
         case RestrictedTraceID::asphalt_8:
             asphalt_8::SetBinaryDataDecompressCallback(callback);
+            break;
+        case RestrictedTraceID::avakin_life:
+            avakin_life::SetBinaryDataDecompressCallback(callback);
             break;
         case RestrictedTraceID::brawl_stars:
             brawl_stars::SetBinaryDataDecompressCallback(callback);
@@ -1330,6 +1368,9 @@ void SetBinaryDataDecompressCallback(RestrictedTraceID traceID, DecompressCallba
             break;
         case RestrictedTraceID::real_commando_secret_mission:
             real_commando_secret_mission::SetBinaryDataDecompressCallback(callback);
+            break;
+        case RestrictedTraceID::real_cricket_20:
+            real_cricket_20::SetBinaryDataDecompressCallback(callback);
             break;
         case RestrictedTraceID::real_gangster_crime:
             real_gangster_crime::SetBinaryDataDecompressCallback(callback);
