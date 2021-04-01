@@ -19,6 +19,7 @@
 #include "compiler/translator/IntermNode.h"
 #include "compiler/translator/OutputVulkanGLSL.h"
 #include "compiler/translator/StaticType.h"
+#include "compiler/translator/glslang_wrapper.h"
 #include "compiler/translator/tree_ops/vulkan/FlagSamplersWithTexelFetch.h"
 #include "compiler/translator/tree_ops/vulkan/MonomorphizeUnsupportedFunctionsInVulkanGLSL.h"
 #include "compiler/translator/tree_ops/vulkan/NameEmbeddedUniformStructs.h"
@@ -762,15 +763,14 @@ TranslatorVulkan::TranslatorVulkan(sh::GLenum type, ShShaderSpec spec)
     : TCompiler(type, spec, SH_GLSL_450_CORE_OUTPUT)
 {}
 
-bool TranslatorVulkan::translateImpl(TIntermBlock *root,
+bool TranslatorVulkan::translateImpl(TInfoSinkBase &sink,
+                                     TIntermBlock *root,
                                      ShCompileOptions compileOptions,
                                      PerformanceDiagnostics * /*perfDiagnostics*/,
                                      SpecConst *specConst,
                                      DriverUniform *driverUniforms,
                                      TOutputVulkanGLSL *outputGLSL)
 {
-    TInfoSinkBase &sink = getInfoSink().obj;
-
     if (getShaderType() == GL_VERTEX_SHADER)
     {
         if (!ShaderBuiltinsWorkaround(this, root, &getSymbolTable(), compileOptions))
@@ -1007,10 +1007,11 @@ bool TranslatorVulkan::translateImpl(TIntermBlock *root,
     {
         case gl::ShaderType::Fragment:
         {
-            bool usesPointCoord   = false;
-            bool usesFragCoord    = false;
-            bool usesSampleMaskIn = false;
-            bool usesLastFragData = false;
+            bool usesPointCoord    = false;
+            bool usesFragCoord     = false;
+            bool usesSampleMaskIn  = false;
+            bool usesLastFragData  = false;
+            bool useSamplePosition = false;
 
             // Search for the gl_PointCoord usage, if its used, we need to flip the y coordinate.
             for (const ShaderVariable &inputVarying : mInputVaryings)
@@ -1023,6 +1024,12 @@ bool TranslatorVulkan::translateImpl(TIntermBlock *root,
                 if (inputVarying.name == "gl_SampleMaskIn")
                 {
                     usesSampleMaskIn = true;
+                    continue;
+                }
+
+                if (inputVarying.name == "gl_SamplePosition")
+                {
+                    useSamplePosition = true;
                     continue;
                 }
 
@@ -1137,6 +1144,32 @@ bool TranslatorVulkan::translateImpl(TIntermBlock *root,
                 if (!RotateAndFlipBuiltinVariable(this, root, GetMainSequence(root), flipNegXY,
                                                   &getSymbolTable(),
                                                   BuiltInVariable::gl_PointCoord(),
+                                                  kFlippedPointCoordName, pivot, fragRotation))
+                {
+                    return false;
+                }
+            }
+
+            if (useSamplePosition)
+            {
+                TIntermTyped *flipXY = specConst->getFlipXY();
+                if (!flipXY)
+                {
+                    flipXY = driverUniforms->getFlipXYRef();
+                }
+                TIntermConstantUnion *pivot = CreateFloatNode(0.5f);
+                TIntermTyped *fragRotation  = nullptr;
+                if (usePreRotation)
+                {
+                    fragRotation = specConst->getFragRotationMatrix();
+                    if (!fragRotation)
+                    {
+                        fragRotation = driverUniforms->getFragRotationMatrixRef();
+                    }
+                }
+                if (!RotateAndFlipBuiltinVariable(this, root, GetMainSequence(root), flipXY,
+                                                  &getSymbolTable(),
+                                                  BuiltInVariable::gl_SamplePosition(),
                                                   kFlippedPointCoordName, pivot, fragRotation))
                 {
                     return false;
@@ -1291,8 +1324,7 @@ bool TranslatorVulkan::translate(TIntermBlock *root,
                                  ShCompileOptions compileOptions,
                                  PerformanceDiagnostics *perfDiagnostics)
 {
-
-    TInfoSinkBase &sink = getInfoSink().obj;
+    TInfoSinkBase sink;
 
     bool precisionEmulation = false;
     if (!emulatePrecisionIfNeeded(root, sink, &precisionEmulation, SH_SPIRV_VULKAN_OUTPUT))
@@ -1310,7 +1342,7 @@ bool TranslatorVulkan::translate(TIntermBlock *root,
     if ((compileOptions & SH_USE_SPECIALIZATION_CONSTANT) != 0)
     {
         DriverUniform driverUniforms;
-        if (!translateImpl(root, compileOptions, perfDiagnostics, &specConst, &driverUniforms,
+        if (!translateImpl(sink, root, compileOptions, perfDiagnostics, &specConst, &driverUniforms,
                            &outputGLSL))
         {
             return false;
@@ -1319,8 +1351,8 @@ bool TranslatorVulkan::translate(TIntermBlock *root,
     else
     {
         DriverUniformExtended driverUniformsExt;
-        if (!translateImpl(root, compileOptions, perfDiagnostics, &specConst, &driverUniformsExt,
-                           &outputGLSL))
+        if (!translateImpl(sink, root, compileOptions, perfDiagnostics, &specConst,
+                           &driverUniformsExt, &outputGLSL))
         {
             return false;
         }
@@ -1329,12 +1361,24 @@ bool TranslatorVulkan::translate(TIntermBlock *root,
     // Write translated shader.
     root->traverse(&outputGLSL);
 
-    return true;
+    return compileToSpirv(sink);
 }
 
 bool TranslatorVulkan::shouldFlattenPragmaStdglInvariantAll()
 {
     // Not necessary.
     return false;
+}
+
+bool TranslatorVulkan::compileToSpirv(const TInfoSinkBase &glsl)
+{
+    angle::spirv::Blob spirvBlob;
+    if (!GlslangCompileToSpirv(getResources(), getShaderType(), glsl.str(), &spirvBlob))
+    {
+        return false;
+    }
+
+    getInfoSink().obj.setBinary(std::move(spirvBlob));
+    return true;
 }
 }  // namespace sh
