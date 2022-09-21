@@ -2604,6 +2604,12 @@ cc_defaults {
                 "-DINFLATE_CHUNK_SIMD_NEON",
             ],
         },
+        riscv64: {
+            exclude_srcs: [
+                "third_party/zlib/contrib/optimizations/inffast_chunk.c",
+                "third_party/zlib/contrib/optimizations/inflate.c",
+            ],
+        },
     },
     defaults: [
         "third_party_zlib_zlib_common_headers",
@@ -2966,6 +2972,14 @@ cc_library_static {
                 "-DCRC32_ARMV8_CRC32",
                 "-DINFLATE_CHUNK_READ_64LE",
                 "-DINFLATE_CHUNK_SIMD_NEON",
+            ],
+        },
+        riscv64: {
+            cflags: [
+                "-DCPU_NO_SIMD",
+            ],
+            srcs: [
+                "third_party/zlib/inflate.c",
             ],
         },
     },
